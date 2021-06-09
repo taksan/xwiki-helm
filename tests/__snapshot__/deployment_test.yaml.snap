@@ -1,25 +1,58 @@
 should properly set value:
   1: |
-    - mountPath: /opt/solr/server/solr
+    - mountPath: /usr/local/xwiki
       name: xwiki-data
+    - mountPath: /opt/solr/server/solr
+      name: xwiki-solr-data
+    - mountPath: /usr/local/tomcat/conf/web.xml
+      name: xwiki-tomcat-conf
+      subPath: web.xml
   2: |
+    - name: xwiki-solr-data
+      persistentVolumeClaim:
+        claimName: xwiki-solr
     - name: xwiki-data
       persistentVolumeClaim:
         claimName: xwiki
-should properly set value pvc:
+    - configMap:
+        items:
+        - key: web.xml
+          path: web.xml
+        name: xwiki-tomcat-conf
+      name: xwiki-tomcat-conf
+should properly set value for xwiki pvc:
   1: |
     accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
     resources:
       requests:
         storage: 500Mi
+should properly set value for xwiki-solr pvc:
+  1: |
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 8Gi
 should use custom image:
   1: |
+    - name: JAVA_OPTS
+      value: -Xmx2048m
     - name: DB_PASSWORD
       valueFrom:
         secretKeyRef:
           key: DB_PASSWORD
           name: RELEASE-NAME
+    - name: INDEX_HOST
+      valueFrom:
+        configMapKeyRef:
+          key: INDEX_HOST
+          name: RELEASE-NAME-xwiki
+    - name: INDEX_PORT
+      valueFrom:
+        configMapKeyRef:
+          key: INDEX_PORT
+          name: RELEASE-NAME-xwiki
     - name: DB_HOST
       valueFrom:
         configMapKeyRef:
@@ -37,11 +70,57 @@ should use custom image:
           name: RELEASE-NAME-xwiki
 should use mysql lts image:
   1: |
+    - name: JAVA_OPTS
+      value: -Xmx2048m
     - name: DB_PASSWORD
       valueFrom:
         secretKeyRef:
           key: mysql-password
           name: RELEASE-NAME-mysql
+    - name: INDEX_HOST
+      valueFrom:
+        configMapKeyRef:
+          key: INDEX_HOST
+          name: RELEASE-NAME-xwiki
+    - name: INDEX_PORT
+      valueFrom:
+        configMapKeyRef:
+          key: INDEX_PORT
+          name: RELEASE-NAME-xwiki
+    - name: DB_HOST
+      valueFrom:
+        configMapKeyRef:
+          key: DB_HOST
+          name: RELEASE-NAME-xwiki
+    - name: DB_USER
+      valueFrom:
+        configMapKeyRef:
+          key: DB_USER
+          name: RELEASE-NAME-xwiki
+    - name: DB_DATABASE
+      valueFrom:
+        configMapKeyRef:
+          key: DB_DATABASE
+          name: RELEASE-NAME-xwiki
+should use mysql lts image when mariadb is specified as it is compatible with mysql:
+  1: |
+    - name: JAVA_OPTS
+      value: -Xmx2048m
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          key: mariadb-password
+          name: RELEASE-NAME-mariadb
+    - name: INDEX_HOST
+      valueFrom:
+        configMapKeyRef:
+          key: INDEX_HOST
+          name: RELEASE-NAME-xwiki
+    - name: INDEX_PORT
+      valueFrom:
+        configMapKeyRef:
+          key: INDEX_PORT
+          name: RELEASE-NAME-xwiki
     - name: DB_HOST
       valueFrom:
         configMapKeyRef:
@@ -59,11 +138,23 @@ should use mysql lts image:
           name: RELEASE-NAME-xwiki
 should use postgres lts image:
   1: |
+    - name: JAVA_OPTS
+      value: -Xmx2048m
     - name: DB_PASSWORD
       valueFrom:
         secretKeyRef:
           key: postgresql-password
           name: RELEASE-NAME-postgresql
+    - name: INDEX_HOST
+      valueFrom:
+        configMapKeyRef:
+          key: INDEX_HOST
+          name: RELEASE-NAME-xwiki
+    - name: INDEX_PORT
+      valueFrom:
+        configMapKeyRef:
+          key: INDEX_PORT
+          name: RELEASE-NAME-xwiki
     - name: DB_HOST
       valueFrom:
         configMapKeyRef:

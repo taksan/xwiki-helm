@@ -1,0 +1,40 @@
+suite: test tomcat config map test
+templates:
+  - tomcat-configmap.yaml
+tests:
+  - it: should set values properly
+    release:
+      name: release
+      service: tiller
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - isAPIVersion:
+          of: v1
+      - equal:
+          path: metadata.name
+          value: xwiki-tomcat-conf
+      - equal:
+          path: metadata.labels.app
+          value: release-xwiki
+      - matchRegex:
+          path: metadata.labels.chart
+          value: xwiki-*
+      - equal:
+          path: metadata.labels.release
+          value: release
+      - equal:
+          path: metadata.labels.heritage
+          value: Tiller
+      - matchSnapshot:
+          path: spec
+  - it: should include web.xml contents
+    set:
+      webXmlFile: web.xml.fortests
+    release:
+      name: release
+    asserts:
+      - equal:
+          path: data
+          value:
+            web.xml: web.xml test content

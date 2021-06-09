@@ -5,6 +5,7 @@ replicaCount: 1
 image:
   name: xwiki
   pullPolicy: IfNotPresent
+  wikiversion: lts
 ## Image Tag useful when externalDB is been used
   tag: ''
 service:
@@ -20,6 +21,7 @@ resources:
   requests:
     cpu: 500m
     memory: 3000Mi
+
 ##
 ## MySql chart configuration
 ##
@@ -37,16 +39,62 @@ mysql:
     mysql.cnf: |-
       [client]
       default-character-set = utf8mb4
-      
+
       [mysqld]
       character-set-server = utf8mb4
       collation-server = utf8mb4_bin
       explicit_defaults_for_timestamp = 1
-      
+
       [mysql]
       default-character-set = utf8mb4
+
+## MariaDB helm chart
+## https://github.com/bitnami/charts/tree/master/bitnami/mariadb
+mariadb:
+ ## Whether to deploy a mariadb server
+  enabled: false
+  auth:
+    rootPassword: xwiki
+    username: xwiki
+    password: xwiki
+    database: xwiki
+  persistence:
+    size: 20Gi
+  image:
+    tag: 10.5.10
+  primary:
+    configuration: |-
+      [mysqld]
+      skip-name-resolve
+      explicit_defaults_for_timestamp = 1
+      basedir=/opt/bitnami/mariadb
+      plugin_dir=/opt/bitnami/mariadb/plugin
+      port=3306
+      socket=/opt/bitnami/mariadb/tmp/mysql.sock
+      tmpdir=/opt/bitnami/mariadb/tmp
+      max_allowed_packet=16M
+      bind-address=0.0.0.0
+      pid-file=/opt/bitnami/mariadb/tmp/mysqld.pid
+      log-error=/opt/bitnami/mariadb/logs/mysqld.log
+      character-set-server = utf8mb4
+      collation-server = utf8mb4_bin
+
+      [client]
+      port=3306
+      socket=/opt/bitnami/mariadb/tmp/mysql.sock
+      default-character-set = utf8mb4
+      plugin_dir=/opt/bitnami/mariadb/plugin
+
+      [manager]
+      port=3306
+      socket=/opt/bitnami/mariadb/tmp/mysql.sock
+      pid-file=/opt/bitnami/mariadb/tmp/mysqld.pid
+
+      [mysql]
+      default-character-set = utf8mb4
+
 ##
-## MySql chart configuration
+## Postgres chart configuration
 ##
 ## https://github.com/helm/charts/tree/master/stable/postgresql
 ##
@@ -79,22 +127,27 @@ solr:
   enabled: true
   host: localhost
   port: 8983
+  storage: 8Gi
+  storageAccessMode: ReadWriteOnce
 
 # To use ingress for routing set ingress.enabled value to true and istio.enabled value to false
 ingress:
   enabled: true
-  issuer: dev-issuer
   annotations:
     kubernetes.io/ingress.class: nginx
-    #   ingress.kubernetes.io/rewrite-target: /
+  hostName:
+  tls:
 
 # To use istio for routing set istio.enabled value to true and ingress.enabled value to false
 istio:
   enabled: false
   host: "*"
+
 storage: "500Mi"
 storageClassName: ""
+storageAccessMode: ReadWriteOnce
 buildID: "123"
+webXmlFile: default-web.xml
 
 
 ## Read about PostDistribution budget at https://kubernetes.io/docs/concepts/workloads/pods/disruptions/

@@ -20,6 +20,10 @@ data:
   DB_USER: {{ .Values.postgresql.postgresqlUsername | quote }}
   DB_HOST: "{{ .Release.Name }}-postgresql"
   DB_DATABASE: {{ .Values.postgresql.postgresqlDatabase | quote }}
+{{- else if .Values.mariadb.enabled }}
+  DB_USER: {{ .Values.mariadb.auth.username | quote }}
+  DB_HOST: "{{ .Release.Name }}-mariadb"
+  DB_DATABASE: {{ .Values.mariadb.auth.database | quote }}  
 {{- else }}
   DB_USER: {{ .Values.externalDB.user | quote }}
   DB_HOST: {{ .Values.externalDB.host | quote }}

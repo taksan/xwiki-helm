@@ -4,15 +4,17 @@ metadata:
   name: {{ template "fullname" . }}
   labels:
   {{- if .Values.mysql.enabled }}
-    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-lts-mysql-tomcat"
+    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-{{.Values.image.wikiversion}}-mysql-tomcat"
   {{- else if .Values.postgresql.enabled }}
-    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-lts-postgres-tomcat"
+    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-{{.Values.image.wikiversion}}-postgres-tomcat"
+  {{- else if .Values.mariadb.enabled }}
+    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-{{.Values.image.wikiversion}}-mariadb-tomcat"
   {{- else }}
     app: {{ .Values.image.name }}-{{ .Chart.AppVersion }}-{{ .Values.image.tag }}
   {{- end }}
     version: "{{ .Chart.AppVersion }}"
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-spec:  
+spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
@@ -24,10 +26,12 @@ spec:
     spec:
       containers:
       - name: {{ .Chart.Name }}
-      {{- if .Values.mysql.enabled }}
-        image: "{{ .Values.image.name }}:lts-mysql-tomcat"
+      {{- if .Values.mariadb.enabled }}
+        image: "{{ .Values.image.name }}:{{.Values.image.wikiversion}}-mysql-tomcat"
+      {{- else if .Values.mysql.enabled }}
+        image: "{{ .Values.image.name }}:{{.Values.image.wikiversion}}-mysql-tomcat"
       {{- else if .Values.postgresql.enabled }}
-        image: "{{ .Values.image.name }}:lts-postgres-tomcat"
+        image: "{{ .Values.image.name }}:{{.Values.image.wikiversion}}-postgres-tomcat"
       {{- else }}
         image: {{ .Values.image.name }}:{{ .Values.image.tag }}
       {{- end }}
@@ -40,7 +44,10 @@ spec:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-        {{- if .Values.mysql.enabled }}
+        {{- if .Values.mariadb.enabled }}
+              name: "{{ .Release.Name }}-mariadb"
+              key: mariadb-password
+        {{- else if .Values.mysql.enabled }}
               name: "{{ .Release.Name }}-mysql"
               key: mysql-password
         {{- else if .Values.postgresql.enabled }}
@@ -81,22 +88,61 @@ spec:
 {{ toYaml .Values.resources | indent 12 }}
         volumeMounts:
         - name: xwiki-data
+          mountPath: /usr/local/xwiki
+        - name: xwiki-solr-data
           mountPath: /opt/solr/server/solr
+        - name: xwiki-tomcat-conf
+          mountPath: /usr/local/tomcat/conf/web.xml
+          subPath: web.xml
       volumes:
+      - name: xwiki-solr-data
+        persistentVolumeClaim:
+          claimName: xwiki-solr
       - name: xwiki-data
         persistentVolumeClaim:
           claimName: xwiki
+      - name: xwiki-tomcat-conf
+        configMap:
+          name: xwiki-tomcat-conf
+          items:
+          - key: web.xml
+            path: web.xml
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: xwiki
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
 spec:
   accessModes:
-    - ReadWriteMany
+    - {{.Values.storageAccessMode}}
   resources:
     requests:
       storage: {{ .Values.storage }}
+    {{- if .Values.storageClass }}
+    storageClassName: {{ .Values.storageClass | quote }}
+    {{- end }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: xwiki-solr
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+spec:
+  accessModes:
+    - {{ .Values.solr.storageAccessMode}}
+  resources:
+    requests:
+      storage: {{ .Values.solr.storage }}
     {{- if .Values.storageClass }}
     storageClassName: {{ .Values.storageClass | quote }}
     {{- end }}

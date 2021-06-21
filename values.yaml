@@ -29,7 +29,7 @@ resources:
 ##
 mysql:
  ## Whether to deploy a mysql server. Set false for a different database.
-  enabled: true
+  enabled: false
   mysqlRootPassword: xwiki
   mysqlUser: xwiki
   mysqlPassword: xwiki

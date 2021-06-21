@@ -3,17 +3,8 @@ kind: Deployment
 metadata:
   name: {{ template "fullname" . }}
   labels:
-  {{- if .Values.mysql.enabled }}
-    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-{{.Values.image.wikiversion}}-mysql-tomcat"
-  {{- else if .Values.postgresql.enabled }}
-    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-{{.Values.image.wikiversion}}-postgres-tomcat"
-  {{- else if .Values.mariadb.enabled }}
-    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-{{.Values.image.wikiversion}}-mariadb-tomcat"
-  {{- else }}
-    app: {{ .Values.image.name }}-{{ .Chart.AppVersion }}-{{ .Values.image.tag }}
-  {{- end }}
-    version: "{{ .Chart.AppVersion }}"
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ template "fullAppName" . }}
+    {{- include "standard-labels-no-app" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -26,15 +17,7 @@ spec:
     spec:
       containers:
       - name: {{ .Chart.Name }}
-      {{- if .Values.mariadb.enabled }}
-        image: "{{ .Values.image.name }}:{{.Values.image.wikiversion}}-mysql-tomcat"
-      {{- else if .Values.mysql.enabled }}
-        image: "{{ .Values.image.name }}:{{.Values.image.wikiversion}}-mysql-tomcat"
-      {{- else if .Values.postgresql.enabled }}
-        image: "{{ .Values.image.name }}:{{.Values.image.wikiversion}}-postgres-tomcat"
-      {{- else }}
-        image: {{ .Values.image.name }}:{{ .Values.image.tag }}
-      {{- end }}
+        image: {{ template "xwikiImageName" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
@@ -44,19 +27,8 @@ spec:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-        {{- if .Values.mariadb.enabled }}
-              name: "{{ .Release.Name }}-mariadb"
-              key: mariadb-password
-        {{- else if .Values.mysql.enabled }}
-              name: "{{ .Release.Name }}-mysql"
-              key: mysql-password
-        {{- else if .Values.postgresql.enabled }}
-              name: "{{ .Release.Name }}-postgresql"
-              key: postgresql-password
-        {{- else }}
-              name: {{ .Release.Name | quote }}
-              key: DB_PASSWORD
-        {{- end }}
+              name: {{ template "dbSecretRefName" .}}
+              key: {{ template "dbSecretRefKey" .}}
         {{- if .Values.solr.enabled }}
         - name: INDEX_HOST
           valueFrom:
@@ -114,10 +86,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: xwiki
   labels:
-    app: {{ template "fullname" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    release: {{ .Release.Name | quote }}
-    heritage: {{ .Release.Service | quote }}
+    {{- include "standard-labels" . | nindent 4 }}
 spec:
   accessModes:
     - {{.Values.storageAccessMode}}
@@ -133,10 +102,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: xwiki-solr
   labels:
-    app: {{ template "fullname" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    release: {{ .Release.Name | quote }}
-    heritage: {{ .Release.Service | quote }}
+    {{- include "standard-labels" . | nindent 4 }}
 spec:
   accessModes:
     - {{ .Values.solr.storageAccessMode}}

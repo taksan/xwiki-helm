@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: {{ template "fullname" . }}
   labels:
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    {{- include "standard-labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:

@@ -8,7 +8,7 @@ metadata:
       {{ toYaml .Values.ingress.annotations | indent 0 }}
   {{- end }}
   labels:
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    {{- include "standard-labels" . | nindent 4 }}
 spec:
   rules:
   - http:
@@ -21,7 +21,6 @@ spec:
     host: {{ .Values.ingress.hostName | quote }}
     {{- end -}}
   {{- if .Values.ingress.tls }}
-  tls:
-{{ toYaml .Values.ingress.tls | indent 2 }}
+  tls: {{ toYaml .Values.ingress.tls | nindent 4 }}
   {{- end }}
 {{- end -}}

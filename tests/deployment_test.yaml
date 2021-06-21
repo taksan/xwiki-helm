@@ -26,7 +26,6 @@ tests:
     set:
       image.tag: latest
       mysql.enabled: true
-      postgresql.enabled: false
     asserts:
       - isKind:
           of: Deployment
@@ -47,7 +46,6 @@ tests:
   - it: should use postgres lts image
     set:
       image.tag: latest
-      mysql.enabled: false
       postgresql.enabled: true
     asserts:
       - isKind:
@@ -62,14 +60,13 @@ tests:
           pattern: xwiki-*
       - matchRegex:
           path: metadata.labels.app
-          pattern: -lts-postgres-tomcat
+          pattern: -lts-postgresql-tomcat
       - equal:
           path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key
           value: postgresql-password
   - it: should use mysql lts image when mariadb is specified as it is compatible with mysql
     set:
       image.tag: latest
-      mysql.enabled: false
       mariadb.enabled: true
     asserts:
       - isKind:
@@ -92,6 +89,7 @@ tests:
     set:
       image.pullPolicy: IfNotPresent
       service.internalPort: 8080
+      mysql.enabled: true
     asserts:
       - equal:
           path: metadata.name
@@ -124,7 +122,9 @@ tests:
           path: spec.template.spec.containers[0].volumeMounts
       - matchSnapshot:
           path: spec.template.spec.volumes
-  - it: should properly set value for xwiki pvc 
+  - it: should properly set value for xwiki pvc
+    set:
+      mysql.enabled: true
     asserts:
       - isKind:
           of: PersistentVolumeClaim
@@ -137,7 +137,9 @@ tests:
           value: xwiki
         documentIndex: 1
 
-  - it: should properly set value for xwiki-solr pvc 
+  - it: should properly set value for xwiki-solr pvc
+    set:
+      mysql.enabled: true
     asserts:
       - isKind:
           of: PersistentVolumeClaim

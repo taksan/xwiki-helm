@@ -3,10 +3,7 @@ kind: ConfigMap
 metadata:
   name: xwiki-tomcat-conf
   labels:
-    app: {{ template "fullname" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    release: {{ .Release.Name | quote }}
-    heritage: {{ .Release.Service | quote }}
+    {{- include "standard-labels" . | nindent 4 }}
 data:
   web.xml: |
 {{ .Files.Get .Values.webXmlFile | indent 4}}

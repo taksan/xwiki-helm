@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: xwiki-tomcat-conf
   labels:
-    {{- include "standard-labels" . | nindent 4 }}
+    {{- include "xwiki.standard-labels" . | nindent 4 }}
 data:
   web.xml: |
 {{ .Files.Get .Values.webXmlFile | indent 4}}

@@ -1,23 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "fullname" . }}
+  name: {{ template "xwiki.fullname" . }}
   labels:
-    app: {{ template "fullAppName" . }}
-    {{- include "standard-labels-no-app" . | nindent 4 }}
+    app: {{ template "xwiki.fullAppName" . }}
+    version: {{ .Values.image.wikiversion }}
+    {{- include "xwiki.standard-labels-no-app" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ template "fullname" . }} # has to match .spec.template.metadata.labels
+      app: {{ template "xwiki.fullname" . }} # has to match .spec.template.metadata.labels
   template:
     metadata:
       labels:
-        app: {{ template "fullname" . }}
+        app: {{ template "xwiki.fullname" . }}
     spec:
       containers:
       - name: {{ .Chart.Name }}
-        image: {{ template "xwikiImageName" . }}
+        image: {{ template "xwiki.xwikiImageName" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
@@ -27,34 +28,34 @@ spec:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ template "dbSecretRefName" .}}
-              key: {{ template "dbSecretRefKey" .}}
+              name: {{ template "xwiki.dbSecretRefName" .}}
+              key: {{ template "xwiki.dbSecretRefKey" .}}
         {{- if .Values.solr.enabled }}
         - name: INDEX_HOST
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: INDEX_HOST
         - name: INDEX_PORT
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: INDEX_PORT
         {{- end }}
         - name: DB_HOST
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: DB_HOST
         - name: DB_USER
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: DB_USER
         - name: DB_DATABASE
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: DB_DATABASE
         resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -86,7 +87,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: xwiki
   labels:
-    {{- include "standard-labels" . | nindent 4 }}
+    {{- include "xwiki.standard-labels" . | nindent 4 }}
 spec:
   accessModes:
     - {{.Values.storageAccessMode}}
@@ -102,7 +103,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: xwiki-solr
   labels:
-    {{- include "standard-labels" . | nindent 4 }}
+    {{- include "xwiki.standard-labels" . | nindent 4 }}
 spec:
   accessModes:
     - {{ .Values.solr.storageAccessMode}}

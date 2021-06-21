@@ -2,20 +2,20 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ template "fullname" . }}
+  name: {{ template "xwiki.fullname" . }}
   annotations:
   {{- if .Values.ingress.annotations }}
       {{ toYaml .Values.ingress.annotations | indent 0 }}
   {{- end }}
   labels:
-    {{- include "standard-labels" . | nindent 4 }}
+    {{- include "xwiki.standard-labels" . | nindent 4 }}
 spec:
   rules:
   - http:
       paths:
       - path: /
         backend:
-          serviceName: {{ template "fullname" . }}
+          serviceName: {{ template "xwiki.fullname" . }}
           servicePort: {{ .Values.service.externalPort }}
     {{- if .Values.ingress.hostName }}
     host: {{ .Values.ingress.hostName | quote }}

@@ -1,9 +1,12 @@
 dependencies:
 - name: mysql
-  repository: https://kubernetes-charts.storage.googleapis.com
-  version: 1.2.0
+  repository: https://charts.helm.sh/stable
+  version: 1.6.9
 - name: postgresql
-  repository: https://kubernetes-charts.storage.googleapis.com
+  repository: https://charts.helm.sh/stable
   version: 5.3.7
-digest: sha256:0aa18b894724a89354e54e4ded80805f4dea1f6a3de4ff37012060e736f5abbc
-generated: "2019-06-13T02:35:04.436894581+05:30"
+- name: mariadb
+  repository: https://charts.bitnami.com/bitnami
+  version: 9.3.11
+digest: sha256:bbad2fd8c8f777870f95d2464b8b8cad4c88b5444d8b1dc1800e966535e1c625
+generated: "2021-06-10T09:16:32.335284242-03:00"

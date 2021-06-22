@@ -3,7 +3,7 @@ should set values properly:
     labels:
       app: release-xwiki
       chart: xwiki-1.0-SNAPSHOT
-      heritage: Tiller
+      heritage: Helm
       release: release
     name: release-xwiki
   2: |

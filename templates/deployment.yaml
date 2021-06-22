@@ -1,36 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "fullname" . }}
+  name: {{ template "xwiki.fullname" . }}
   labels:
-  {{- if .Values.mysql.enabled }}
-    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-lts-mysql-tomcat"
-  {{- else if .Values.postgresql.enabled }}
-    app: "{{ .Values.image.name }}-{{ .Chart.AppVersion }}-lts-postgres-tomcat"
-  {{- else }}
-    app: {{ .Values.image.name }}-{{ .Chart.AppVersion }}-{{ .Values.image.tag }}
-  {{- end }}
-    version: "{{ .Chart.AppVersion }}"
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-spec:  
+    app: {{ template "xwiki.fullAppName" . }}
+    version: {{ .Values.image.wikiversion }}
+    {{- include "xwiki.standard-labels-no-app" . | nindent 4 }}
+spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ template "fullname" . }} # has to match .spec.template.metadata.labels
+      app: {{ template "xwiki.fullname" . }} # has to match .spec.template.metadata.labels
   template:
     metadata:
       labels:
-        app: {{ template "fullname" . }}
+        app: {{ template "xwiki.fullname" . }}
     spec:
       containers:
       - name: {{ .Chart.Name }}
-      {{- if .Values.mysql.enabled }}
-        image: "{{ .Values.image.name }}:lts-mysql-tomcat"
-      {{- else if .Values.postgresql.enabled }}
-        image: "{{ .Values.image.name }}:lts-postgres-tomcat"
-      {{- else }}
-        image: {{ .Values.image.name }}:{{ .Values.image.tag }}
-      {{- end }}
+        image: {{ template "xwiki.xwikiImageName" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
@@ -40,63 +28,88 @@ spec:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-        {{- if .Values.mysql.enabled }}
-              name: "{{ .Release.Name }}-mysql"
-              key: mysql-password
-        {{- else if .Values.postgresql.enabled }}
-              name: "{{ .Release.Name }}-postgresql"
-              key: postgresql-password
-        {{- else }}
-              name: {{ .Release.Name | quote }}
-              key: DB_PASSWORD
-        {{- end }}
+              name: {{ template "xwiki.dbSecretRefName" .}}
+              key: {{ template "xwiki.dbSecretRefKey" .}}
         {{- if .Values.solr.enabled }}
         - name: INDEX_HOST
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: INDEX_HOST
         - name: INDEX_PORT
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: INDEX_PORT
         {{- end }}
         - name: DB_HOST
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: DB_HOST
         - name: DB_USER
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: DB_USER
         - name: DB_DATABASE
           valueFrom:
             configMapKeyRef:
-              name: {{ template "fullname" . }}
+              name: {{ template "xwiki.fullname" . }}
               key: DB_DATABASE
         resources:
 {{ toYaml .Values.resources | indent 12 }}
         volumeMounts:
         - name: xwiki-data
+          mountPath: /usr/local/xwiki
+        - name: xwiki-solr-data
           mountPath: /opt/solr/server/solr
+        - name: xwiki-tomcat-conf
+          mountPath: /usr/local/tomcat/conf/web.xml
+          subPath: web.xml
       volumes:
+      - name: xwiki-solr-data
+        persistentVolumeClaim:
+          claimName: xwiki-solr
       - name: xwiki-data
         persistentVolumeClaim:
           claimName: xwiki
+      - name: xwiki-tomcat-conf
+        configMap:
+          name: xwiki-tomcat-conf
+          items:
+          - key: web.xml
+            path: web.xml
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: xwiki
+  labels:
+    {{- include "xwiki.standard-labels" . | nindent 4 }}
 spec:
   accessModes:
-    - ReadWriteMany
+    - {{.Values.storageAccessMode}}
   resources:
     requests:
       storage: {{ .Values.storage }}
+    {{- if .Values.storageClass }}
+    storageClassName: {{ .Values.storageClass | quote }}
+    {{- end }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: xwiki-solr
+  labels:
+    {{- include "xwiki.standard-labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.solr.storageAccessMode}}
+  resources:
+    requests:
+      storage: {{ .Values.solr.storage }}
     {{- if .Values.storageClass }}
     storageClassName: {{ .Values.storageClass | quote }}
     {{- end }}

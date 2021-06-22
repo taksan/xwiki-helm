@@ -5,7 +5,6 @@ tests:
   - it: should set values properly
     release:
       name: release
-      service: tiller
     asserts:
       - isKind:
           of: ConfigMap
@@ -25,7 +24,7 @@ tests:
           value: release
       - equal:
           path: metadata.labels.heritage
-          value: Tiller
+          value: Helm
       - matchSnapshot:
           path: spec
   - it: should set mysql config values
@@ -69,8 +68,6 @@ tests:
       externalDB.user: xwiki
       externalDB.host: xwiki-host
       externalDB.database: xwikidb
-      mysql.enabled: false
-      postgresql.enabled: false
     asserts:
       - equal:
           path: data.DB_USER

@@ -2,19 +2,25 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ template "fullname" . }}
+  name: {{ template "xwiki.fullname" . }}
   annotations:
   {{- if .Values.ingress.annotations }}
       {{ toYaml .Values.ingress.annotations | indent 0 }}
   {{- end }}
   labels:
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    {{- include "xwiki.standard-labels" . | nindent 4 }}
 spec:
   rules:
-  -  http:
+  - http:
       paths:
       - path: /
         backend:
-          serviceName: {{ template "fullname" . }}
+          serviceName: {{ template "xwiki.fullname" . }}
           servicePort: {{ .Values.service.externalPort }}
+    {{- if .Values.ingress.hostName }}
+    host: {{ .Values.ingress.hostName | quote }}
+    {{- end -}}
+  {{- if .Values.ingress.tls }}
+  tls: {{ toYaml .Values.ingress.tls | nindent 4 }}
+  {{- end }}
 {{- end -}}

@@ -21,12 +21,11 @@ tests:
           pattern: default-*
       - matchRegex:
           path: metadata.labels.app
-          pattern: -latest          
+          pattern: -latest
   - it: should use mysql lts image
     set:
       image.tag: latest
       mysql.enabled: true
-      postgresql.enabled: false
     asserts:
       - isKind:
           of: Deployment
@@ -41,10 +40,12 @@ tests:
       - matchRegex:
           path: metadata.labels.app
           pattern: -lts-mysql-tomcat
+      - equal:
+          path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key
+          value: mysql-password
   - it: should use postgres lts image
     set:
       image.tag: latest
-      mysql.enabled: false
       postgresql.enabled: true
     asserts:
       - isKind:
@@ -59,12 +60,37 @@ tests:
           pattern: xwiki-*
       - matchRegex:
           path: metadata.labels.app
-          pattern: -lts-postgres-tomcat 
+          pattern: -lts-postgresql-tomcat
+      - equal:
+          path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key
+          value: postgresql-password
+  - it: should use mysql lts image when mariadb is specified as it is compatible with mysql
+    set:
+      image.tag: latest
+      mariadb.enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: xwiki:lts-mysql-tomcat
+      - matchSnapshot:
+          path: spec.template.spec.containers[0].env
+      - matchRegex:
+          path: metadata.labels.app
+          pattern: xwiki-*
+      - matchRegex:
+          path: metadata.labels.app
+          pattern: -lts-mariadb-tomcat
+      - equal:
+          path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key
+          value: mariadb-password
   - it: should properly set value
     set:
       image.pullPolicy: IfNotPresent
       service.internalPort: 8080
-    asserts:  
+      mysql.enabled: true
+    asserts:
       - equal:
           path: metadata.name
           value: RELEASE-NAME-xwiki
@@ -79,15 +105,26 @@ tests:
           value: xwiki-data
       - equal:
           path: spec.template.spec.volumes[0].name
-          value: xwiki-data
+          value: xwiki-solr-data
       - equal:
           path: spec.template.spec.volumes[0].persistentVolumeClaim.claimName
-          value: xwiki
+          value: xwiki-solr
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[1].name
+          value: xwiki-solr-data
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[2].name
+          value: xwiki-tomcat-conf
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[2].mountPath
+          value: /usr/local/tomcat/conf/web.xml
       - matchSnapshot:
           path: spec.template.spec.containers[0].volumeMounts
       - matchSnapshot:
-          path: spec.template.spec.volumes 
-  - it: should properly set value pvc
+          path: spec.template.spec.volumes
+  - it: should properly set value for xwiki pvc
+    set:
+      mysql.enabled: true
     asserts:
       - isKind:
           of: PersistentVolumeClaim
@@ -100,4 +137,18 @@ tests:
           value: xwiki
         documentIndex: 1
 
-          
+  - it: should properly set value for xwiki-solr pvc
+    set:
+      mysql.enabled: true
+    asserts:
+      - isKind:
+          of: PersistentVolumeClaim
+        documentIndex: 2
+      - matchSnapshot:
+          path: spec
+        documentIndex: 2
+      - equal:
+          path: metadata.name
+          value: xwiki-solr
+        documentIndex: 2
+

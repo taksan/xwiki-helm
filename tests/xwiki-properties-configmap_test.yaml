@@ -1,0 +1,39 @@
+suite: test xwiki properties map test
+templates:
+  - xwiki-properties-configmap.yaml
+tests:
+  - it: should set values properly
+    release:
+      name: release
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - isAPIVersion:
+          of: v1
+      - equal:
+          path: metadata.name
+          value: xwiki-properties
+      - equal:
+          path: metadata.labels.app
+          value: release-xwiki
+      - matchRegex:
+          path: metadata.labels.chart
+          value: xwiki-*
+      - equal:
+          path: metadata.labels.release
+          value: release
+      - equal:
+          path: metadata.labels.heritage
+          value: Helm
+      - matchSnapshot:
+          path: spec
+  - it: should include xwiki.properties contents
+    set:
+      xwikiPropertiesFile: xwiki.properties.fortests
+    release:
+      name: release
+    asserts:
+      - equal:
+          path: data
+          value:
+            xwiki.properties: xwiki.properties test content

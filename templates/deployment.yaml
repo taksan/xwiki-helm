@@ -8,6 +8,8 @@ metadata:
     {{- include "xwiki.standard-labels-no-app" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  strategy: 
+    type: {{ .Values.deployStrategy }}
   selector:
     matchLabels:
       app: {{ template "xwiki.fullname" . }} # has to match .spec.template.metadata.labels
@@ -15,6 +17,8 @@ spec:
     metadata:
       labels:
         app: {{ template "xwiki.fullname" . }}
+      annotations:
+        timestamp: "{{ now | date "20060102150405" }}"
     spec:
       containers:
       - name: {{ .Chart.Name }}
@@ -67,6 +71,12 @@ spec:
         - name: xwiki-tomcat-conf
           mountPath: /usr/local/tomcat/conf/web.xml
           subPath: web.xml
+        - name: xwiki-cfg
+          mountPath: /usr/local/xwiki/data/xwiki.cfg
+          subPath: xwiki.cfg
+        - name: xwiki-properties
+          mountPath: /usr/local/xwiki/data/xwiki.properties
+          subPath: xwiki.properties
       volumes:
       - name: xwiki-solr-data
         persistentVolumeClaim:
@@ -80,6 +90,18 @@ spec:
           items:
           - key: web.xml
             path: web.xml
+      - name: xwiki-cfg
+        configMap:
+          name: xwiki-cfg
+          items:
+          - key: xwiki.cfg
+            path: xwiki.cfg
+      - name: xwiki-properties
+        configMap:
+          name: xwiki-properties
+          items:
+          - key: xwiki.properties
+            path: xwiki.properties
 
 ---
 apiVersion: v1

@@ -145,10 +145,12 @@ istio:
 
 storage: "500Mi"
 storageClassName: ""
-storageAccessMode: ReadWriteOnce
+storageAccessMode: "ReadWriteOnce"
+deployStrategy: "Recreate"
 buildID: "123"
 webXmlFile: default-web.xml
-
+xwikiCfgFile: default-xwiki.cfg
+xwikiPropertiesFile: default-xwiki.properties
 
 ## Read about PostDistribution budget at https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
 ## Use only on a clustered setup

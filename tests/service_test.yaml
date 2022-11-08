@@ -4,6 +4,7 @@ templates:
   - deployment.yaml
 tests:
   - it: should set values properly
+    template: service.yaml
     set:
       mysql.enabled: true
     set:
@@ -32,11 +33,14 @@ tests:
       - equal:
           path: spec.selector.app
           value: release-xwiki
+        template: service.yaml
       - equal:
           path: spec.selector.matchLabels.app
           value: release-xwiki
         template: deployment.yaml
+        documentIndex: 0
       - equal:
           path: spec.template.metadata.labels.app
           value: release-xwiki
         template: deployment.yaml
+        documentIndex: 0

@@ -7,6 +7,12 @@ should properly set value:
     - mountPath: /usr/local/tomcat/conf/web.xml
       name: xwiki-tomcat-conf
       subPath: web.xml
+    - mountPath: /usr/local/xwiki/data/xwiki.cfg
+      name: xwiki-cfg
+      subPath: xwiki.cfg
+    - mountPath: /usr/local/xwiki/data/xwiki.properties
+      name: xwiki-properties
+      subPath: xwiki.properties
   2: |
     - name: xwiki-solr-data
       persistentVolumeClaim:
@@ -20,6 +26,18 @@ should properly set value:
           path: web.xml
         name: xwiki-tomcat-conf
       name: xwiki-tomcat-conf
+    - configMap:
+        items:
+        - key: xwiki.cfg
+          path: xwiki.cfg
+        name: xwiki-cfg
+      name: xwiki-cfg
+    - configMap:
+        items:
+        - key: xwiki.properties
+          path: xwiki.properties
+        name: xwiki-properties
+      name: xwiki-properties
 should properly set value for xwiki pvc:
   1: |
     accessModes:

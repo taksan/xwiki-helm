@@ -16,6 +16,7 @@ tests:
     asserts:
       - isKind:
           of: Ingress
+        template: ingress.yaml
       - matchSnapshot:
           path: metadata.annotations
       - equal:

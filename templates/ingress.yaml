@@ -11,7 +11,7 @@ metadata:
   name: {{ template "xwiki.fullname" . }}
   annotations:
   {{- if .Values.ingress.annotations }}
-      {{ toYaml .Values.ingress.annotations | indent 0 }}
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
   {{- end }}
   labels:
     {{- include "xwiki.standard-labels" . | nindent 4 }}

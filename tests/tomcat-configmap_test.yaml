@@ -18,7 +18,7 @@ tests:
           value: release-xwiki
       - matchRegex:
           path: metadata.labels.chart
-          value: xwiki-*
+          pattern: xwiki-*
       - equal:
           path: metadata.labels.release
           value: release

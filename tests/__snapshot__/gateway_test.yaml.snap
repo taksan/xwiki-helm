@@ -24,3 +24,17 @@ should set values properly of Gateway:
         name: http
         number: 80
         protocol: HTTP
+  2: |
+    gateways:
+    - xwiki-gateway
+    hosts:
+    - '*'
+    http:
+    - match:
+      - uri:
+          prefix: /
+      route:
+      - destination:
+          host: release-xwiki
+          port:
+            number: 80

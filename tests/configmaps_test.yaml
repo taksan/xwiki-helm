@@ -1,80 +1,126 @@
-suite: test configmaps
+suite: ConfigMap
+
 templates:
   - configmaps.yaml
+
 tests:
-  - it: should set values properly
-    release:
-      name: release
-    asserts:
-      - isKind:
-          of: ConfigMap
-      - isAPIVersion:
-          of: v1
-      - equal:
-          path: metadata.name
-          value: release-xwiki
-      - equal:
-          path: metadata.labels.app
-          value: release-xwiki
-      - matchRegex:
-          path: metadata.labels.chart
-          pattern: xwiki-*
-      - equal:
-          path: metadata.labels.release
-          value: release
-      - equal:
-          path: metadata.labels.heritage
-          value: Helm
-      - matchSnapshot:
-          path: spec
-  - it: should set mysql config values
+  - it: does not set INDEX_HOST or INDEX_PORT is solr is disabled
     set:
-      mysql.mysqlUser: xwiki
-      mysql.mysqlDatabase: xwikidb
+      solr.enabled: false
+    asserts:
+      - isEmpty:
+          path: data.INDEX_HOST
+      - isEmpty:
+          path: data.INDEX_PORT
+
+  - it: sets the database host for MariaDB (MariaDB > MySQL > Postgres)
+    set:
+      mariadb.enabled: true
       mysql.enabled: true
       postgresql.enabled: true
     release:
-      name: release
+      name: example-release
     asserts:
       - equal:
-          path: data.DB_USER
-          value: xwiki
+          path: data.DB_HOST
+          value: example-release-mariadb
+
+  - it: sets the database host for MySQL (MariaDB > MySQL > Postgres)
+    set:
+      mariadb.enabled: false
+      mysql.enabled: true
+      postgresql.enabled: true
+    release:
+      name: example-release
+    asserts:
       - equal:
           path: data.DB_HOST
-          value: release-mysql
-      - equal:
-          path: data.DB_DATABASE
-          value: xwikidb
-  - it: should set postgres config values
+          value: example-release-mysql
+
+  - it: sets the database host for Postgres (MariaDB > MySQL > Postgres)
     set:
-      postgresql.postgresqlUsername: xwiki
-      postgresql.postgresqlDatabase: xwikidb
+      mariadb.enabled: false
       mysql.enabled: false
       postgresql.enabled: true
     release:
-      name: release
+      name: example-release
     asserts:
       - equal:
-          path: data.DB_USER
-          value: xwiki
-      - equal:
           path: data.DB_HOST
-          value: release-postgresql
-      - equal:
-          path: data.DB_DATABASE
-          value: xwikidb
-  - it: should set externalDB config values
+          value: example-release-postgresql
+
+  - it: sets the database host for external databases
     set:
-      externalDB.user: xwiki
-      externalDB.host: xwiki-host
-      externalDB.database: xwikidb
+      mariadb.enabled: false
+      mysql.enabled: false
+      postgresql.enabled: false
+      externalDB.host: example.host.svc
+    asserts:
+      - equal:
+          path: data.DB_HOST
+          value: example.host.svc
+
+  - it: sets MariaDB values if present (MariaDB > MySQL > Postgres)
+    set:
+      mysql.enabled: true
+      postgresql.enabled: true
+      mariadb:
+        enabled: true
+        auth:
+          username: mariadb-user
+          database: mariadb-database
     asserts:
       - equal:
           path: data.DB_USER
-          value: xwiki
-      - equal:
-          path: data.DB_HOST
-          value: xwiki-host
+          value: mariadb-user
       - equal:
           path: data.DB_DATABASE
-          value: xwikidb
+          value: mariadb-database
+
+  - it: sets MySQL values if present (MariaDB > MySQL > Postgres)
+    set:
+      mariadb.enabled: false
+      postgresql.enabled: true
+      mysql:
+        enabled: true
+        mysqlUser: mysql-user
+        mysqlDatabase: mysql-database
+    asserts:
+      - equal:
+          path: data.DB_USER
+          value: mysql-user
+      - equal:
+          path: data.DB_DATABASE
+          value: mysql-database
+
+  - it: sets Postgres values if present (MariaDB > MySQL > Postgres)
+    set:
+      mariadb.enabled: false
+      mysql.enabled: false
+      postgresql:
+        enabled: true
+        postgresqlUsername: postgres-user
+        postgresqlDatabase: postgres-database
+    asserts:
+      - equal:
+          path: data.DB_USER
+          value: postgres-user
+      - equal:
+          path: data.DB_DATABASE
+          value: postgres-database
+
+  - it: sets external DB values when using no other engine
+    set:
+      mariadb.enabled: false
+      mysql.enabled: false
+      postgresql.enabled: false
+      externalDB:
+        user: extdb-user
+        database: extdb-database
+    asserts:
+      - equal:
+          path: data.DB_USER
+          value: extdb-user
+      - equal:
+          path: data.DB_DATABASE
+          value: extdb-database

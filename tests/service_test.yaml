@@ -1,46 +1,45 @@
-suite: test service
+suite: Service
+
 templates:
   - service.yaml
   - deployment.yaml
+
 tests:
-  - it: should set values properly
+  - it: sets service type and port info according to release values
     template: service.yaml
     set:
       mysql.enabled: true
-    set:
-      service.type: ClusterIP
-      service.externalPort: 80
-      service.internalPort: 8080
-      service.name: tcp
-      mysql.enabled: true
-    release:
-      name: release
-    asserts:
-      - isKind:
-          of: Service
-      - matchSnapshot:
-          path: spec
-  - it: should have same labels as Deployment
-    set:
-      service.type: ClusterIP
-      service.externalPort: 80
-      service.internalPort: 8080
-      service.name: tcp
-      mysql.enabled: true
-    release:
-      name: release
+      service:
+        type: NonexistentType
+        externalPort: 1234
+        internalPort: 4321
+        name: example-port-name
     asserts:
       - equal:
-          path: spec.selector.app
-          value: release-xwiki
-        template: service.yaml
+          path: spec.type
+          value: NonexistentType
       - equal:
+          path: spec.ports[0].port
+          value: 1234
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 4321
+      - equal:
+          path: spec.ports[0].name
+          value: example-port-name
+
+  - it: selects Pods created by the Deployment resource
+    set:
+      mysql.enabled: true
+    release:
+      name: example-release
+    asserts:
+      - template: deployment.yaml
+        documentIndex: 0
+        equal:
           path: spec.selector.matchLabels.app
-          value: release-xwiki
-        template: deployment.yaml
-        documentIndex: 0
-      - equal:
-          path: spec.template.metadata.labels.app
-          value: release-xwiki
-        template: deployment.yaml
-        documentIndex: 0
+          value: example-release-xwiki
+      - template: service.yaml
+        equal:
+          path: spec.selector.app
+          value: example-release-xwiki

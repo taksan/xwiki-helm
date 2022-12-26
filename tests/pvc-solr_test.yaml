@@ -1,0 +1,17 @@
+suite: PersistentVolumeClaim (Solr)
+
+templates:
+  - pvc-solr.yaml
+
+tests:
+  - it: should properly set value for xwiki-solr pvc
+    set:
+      mysql.enabled: true
+    asserts:
+      - isKind:
+          of: PersistentVolumeClaim
+      - matchSnapshot:
+          path: spec
+      - equal:
+          path: metadata.name
+          value: xwiki-solr

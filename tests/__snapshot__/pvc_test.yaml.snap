@@ -1,0 +1,7 @@
+should properly set value for xwiki pvc:
+  1: |
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 500Mi

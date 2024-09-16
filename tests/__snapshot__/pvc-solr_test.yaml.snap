@@ -1,0 +1,7 @@
+should properly set value for xwiki-solr pvc:
+  1: |
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 8Gi
